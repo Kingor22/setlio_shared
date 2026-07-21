@@ -1,0 +1,3 @@
+# Pure-Dart-Package: Standard-Lints (flutter_lints der Apps setzt Flutter
+# voraus und passt hier nicht).
+include: package:lints/recommended.yaml

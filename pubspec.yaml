@@ -1,0 +1,16 @@
+name: setlio_shared
+description: >-
+  Geteiltes Song-/Setlisten-Format für Setlio und Setronome: Modelle, Enums
+  und Codecs samt Konvertern zwischen Supabase-Zeilen und Setronome-SQLite.
+version: 0.1.0
+publish_to: none
+
+# Bewusst pure Dart ohne Laufzeit-Dependencies: Setronome (Riverpod 2) und
+# Setlio (Riverpod 3) binden das Package ein, ohne dass es einer App ein
+# Upgrade aufzwingt. IDs erzeugen die Apps selbst.
+environment:
+  sdk: ^3.5.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
