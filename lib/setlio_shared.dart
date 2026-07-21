@@ -7,6 +7,7 @@
 /// Modellen leben können.
 library;
 
+export 'src/click_sounds.dart';
 export 'src/codecs.dart';
 export 'src/design_tokens.dart';
 export 'src/enums.dart';
