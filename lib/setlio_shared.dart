@@ -8,6 +8,7 @@
 library;
 
 export 'src/codecs.dart';
+export 'src/design_tokens.dart';
 export 'src/enums.dart';
 export 'src/schema_version.dart';
 export 'src/setlist_bundle.dart';
