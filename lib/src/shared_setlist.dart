@@ -72,13 +72,16 @@ class SharedSetlist {
   }
 
   /// Zum Schreiben (Upsert per ID); ohne Server-Felder, ohne [entries].
+  /// [gigId] wird nur bei einem echten Wert mitgeschickt (wie [createdBy]):
+  /// Setronome kennt keine Gigs, ein Upload darf eine in Setlio bereits
+  /// gesetzte Gig-Verknüpfung deshalb nie stillschweigend auf null ziehen.
   Map<String, dynamic> toSetlioRow() {
     return {
       'id': id,
       'band_id': bandId,
       'name': name,
       'transition_mode': transitionMode.dbValue,
-      'gig_id': gigId,
+      if (gigId != null) 'gig_id': gigId,
       'status': isActive ? 'active' : 'nirvana',
       'shared_to_setronome': sharedToSetronome,
       'origin': origin.dbValue,
