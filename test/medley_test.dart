@@ -8,6 +8,7 @@ Map<String, dynamic> setronomeMedleyMap() => {
       'id': 'medley-1',
       'name': '80s Medley',
       'count_in_bars': 1,
+      'song_change_cue': 'ready_count',
       'parts': jsonEncode([
         {
           'id': 'part-1',
@@ -34,7 +35,8 @@ void main() {
       'id': 'medley-1',
       'band_id': 'band-1',
       'name': '80s Medley',
-      'count_in_bars': 1
+      'count_in_bars': 1,
+      'song_change_cue': 'ready_count'
     });
     expect(rows.parts, hasLength(2));
     expect(rows.parts[0]['position'], 0);

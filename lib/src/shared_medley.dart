@@ -83,6 +83,7 @@ class SharedMedley {
     required this.bandId,
     required this.name,
     this.countInBars = 1,
+    this.songChangeCue = 'ready_count',
     this.parts = const [],
   });
 
@@ -93,6 +94,12 @@ class SharedMedley {
   /// Count-In vor dem ersten Teil, in Takten (0 = keiner). Default 1
   /// erhält das historische Verhalten (Medleys erzwangen einen Takt).
   final int countInBars;
+
+  /// SET-13: Songwechsel-Cue innerhalb des Medleys — 'off' | 'count'
+  /// (nur Zähl-Takt im letzten Takt) | 'ready_count' (ready-Ansage im
+  /// vorletzten + Zähl-Takt im letzten Takt). Default 'ready_count'
+  /// migriert Bestands-Medleys mit "an".
+  final String songChangeCue;
 
   /// In Abspiel-Reihenfolge (position == Listenindex).
   final List<SharedMedleyPart> parts;
@@ -111,6 +118,7 @@ class SharedMedley {
       bandId: medleyRow['band_id'] as String,
       name: medleyRow['name'] as String,
       countInBars: (medleyRow['count_in_bars'] as num?)?.toInt() ?? 1,
+      songChangeCue: medleyRow['song_change_cue'] as String? ?? 'ready_count',
       parts: parts,
     );
   }
@@ -125,6 +133,7 @@ class SharedMedley {
         'band_id': bandId,
         'name': name,
         'count_in_bars': countInBars,
+        'song_change_cue': songChangeCue,
       },
       parts: [
         for (final (index, part) in parts.indexed)
@@ -155,6 +164,7 @@ class SharedMedley {
       bandId: bandId,
       name: map['name'] as String,
       countInBars: (map['count_in_bars'] as num?)?.toInt() ?? 1,
+      songChangeCue: map['song_change_cue'] as String? ?? 'ready_count',
       parts: [
         for (final (index, part) in (decoded as List<dynamic>).indexed)
           SharedMedleyPart.fromSetronomeMap(
@@ -172,6 +182,7 @@ class SharedMedley {
       'name': name,
       'parts': jsonEncode([for (final part in parts) part.toSetronomeMap()]),
       'count_in_bars': countInBars,
+      'song_change_cue': songChangeCue,
     };
   }
 }
