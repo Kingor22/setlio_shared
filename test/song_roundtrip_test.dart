@@ -11,6 +11,7 @@ Map<String, dynamic> setronomeSongMap() => {
       'beats_per_bar': 4,
       'note_value': 4,
       'count_in_bars': 2,
+      'total_bars': 96,
       'click_sound': 'woodblock',
       'accent_beats': '1,3',
       'subdivision': 2,

@@ -22,6 +22,7 @@ class SharedSong {
     this.beatsPerBar = 4,
     this.noteValue = 4,
     this.countInBars = 0,
+    this.totalBars,
     this.subdivision = SharedSubdivision.quarter,
     this.accentBeats = const {1},
     this.clickSound,
@@ -54,6 +55,11 @@ class SharedSong {
 
   /// Einzähler in TAKTEN (nicht Schlägen).
   final int countInBars;
+
+  /// Feste Taktzahl des Songs (optional, von Setronome gepflegt): treibt
+  /// dort Auto-Count-In, Auto-Weiterschaltung und Loop-Button. Null =
+  /// unbegrenzt.
+  final int? totalBars;
   final SharedSubdivision subdivision;
 
   /// 1-basierte betonte Schläge; leer = bewusst kein Akzent.
@@ -97,6 +103,7 @@ class SharedSong {
       beatsPerBar: (row['beats_per_bar'] as num?)?.toInt() ?? 4,
       noteValue: (row['note_value'] as num?)?.toInt() ?? 4,
       countInBars: (row['count_in_bars'] as num?)?.toInt() ?? 0,
+      totalBars: (row['total_bars'] as num?)?.toInt(),
       subdivision:
           SharedSubdivision.fromDb((row['subdivision'] as num?)?.toInt()),
       accentBeats: accentBeatsFromCsv(row['accent_beats'] as String?),
@@ -135,6 +142,7 @@ class SharedSong {
       'beats_per_bar': beatsPerBar,
       'note_value': noteValue,
       'count_in_bars': countInBars,
+      'total_bars': totalBars,
       'subdivision': subdivision.dbValue,
       'accent_beats': accentBeatsToCsv(accentBeats),
       'click_sound': clickSound,
@@ -167,6 +175,7 @@ class SharedSong {
       beatsPerBar: (map['beats_per_bar'] as num?)?.toInt() ?? 4,
       noteValue: (map['note_value'] as num?)?.toInt() ?? 4,
       countInBars: (map['count_in_bars'] as num?)?.toInt() ?? 0,
+      totalBars: (map['total_bars'] as num?)?.toInt(),
       subdivision:
           SharedSubdivision.fromDb((map['subdivision'] as num?)?.toInt()),
       accentBeats: accentBeatsFromCsv(map['accent_beats'] as String?),
@@ -193,6 +202,7 @@ class SharedSong {
       'beats_per_bar': beatsPerBar,
       'note_value': noteValue,
       'count_in_bars': countInBars,
+      'total_bars': totalBars,
       'click_sound': clickSound,
       'accent_beats': accentBeatsToCsv(accentBeats),
       'subdivision': subdivision.dbValue,
