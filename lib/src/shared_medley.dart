@@ -82,12 +82,17 @@ class SharedMedley {
     required this.id,
     required this.bandId,
     required this.name,
+    this.countInBars = 1,
     this.parts = const [],
   });
 
   final String id;
   final String bandId;
   final String name;
+
+  /// Count-In vor dem ersten Teil, in Takten (0 = keiner). Default 1
+  /// erhält das historische Verhalten (Medleys erzwangen einen Takt).
+  final int countInBars;
 
   /// In Abspiel-Reihenfolge (position == Listenindex).
   final List<SharedMedleyPart> parts;
@@ -105,6 +110,7 @@ class SharedMedley {
       id: medleyRow['id'] as String,
       bandId: medleyRow['band_id'] as String,
       name: medleyRow['name'] as String,
+      countInBars: (medleyRow['count_in_bars'] as num?)?.toInt() ?? 1,
       parts: parts,
     );
   }
@@ -114,7 +120,12 @@ class SharedMedley {
   ({Map<String, dynamic> medley, List<Map<String, dynamic>> parts})
       toSetlioRows() {
     return (
-      medley: {'id': id, 'band_id': bandId, 'name': name},
+      medley: {
+        'id': id,
+        'band_id': bandId,
+        'name': name,
+        'count_in_bars': countInBars,
+      },
       parts: [
         for (final (index, part) in parts.indexed)
           SharedMedleyPart(
@@ -143,6 +154,7 @@ class SharedMedley {
       id: id,
       bandId: bandId,
       name: map['name'] as String,
+      countInBars: (map['count_in_bars'] as num?)?.toInt() ?? 1,
       parts: [
         for (final (index, part) in (decoded as List<dynamic>).indexed)
           SharedMedleyPart.fromSetronomeMap(
@@ -159,6 +171,7 @@ class SharedMedley {
       'id': id,
       'name': name,
       'parts': jsonEncode([for (final part in parts) part.toSetronomeMap()]),
+      'count_in_bars': countInBars,
     };
   }
 }

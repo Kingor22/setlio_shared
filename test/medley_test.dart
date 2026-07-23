@@ -7,6 +7,7 @@ import 'package:test/test.dart';
 Map<String, dynamic> setronomeMedleyMap() => {
       'id': 'medley-1',
       'name': '80s Medley',
+      'count_in_bars': 1,
       'parts': jsonEncode([
         {
           'id': 'part-1',
@@ -29,8 +30,12 @@ void main() {
         SharedMedley.fromSetronomeMap(setronomeMedleyMap(), bandId: 'band-1');
     final rows = shared.toSetlioRows();
 
-    expect(rows.medley,
-        {'id': 'medley-1', 'band_id': 'band-1', 'name': '80s Medley'});
+    expect(rows.medley, {
+      'id': 'medley-1',
+      'band_id': 'band-1',
+      'name': '80s Medley',
+      'count_in_bars': 1
+    });
     expect(rows.parts, hasLength(2));
     expect(rows.parts[0]['position'], 0);
     expect(rows.parts[1]['position'], 1);
