@@ -14,6 +14,7 @@ class SharedMedleyPart {
     required this.position,
     required this.barCount,
     this.transition = SharedMedleyTransition.manual,
+    this.barOverrides = const {},
   });
 
   final String id;
@@ -22,6 +23,32 @@ class SharedMedleyPart {
   final int position;
   final int barCount;
   final SharedMedleyTransition transition;
+
+  /// SET-46: abweichende Taktarten einzelner Takte — Takt (1-basiert)
+  /// -> [Schläge, Notenwert], z. B. {12: [6, 4]} für einen 6/4-Takt in
+  /// einem 4/4-Teil. Leer = alle Takte in der Taktart des Songs.
+  /// JSON-Form überall identisch: {"12": [6, 4]}.
+  final Map<int, List<int>> barOverrides;
+
+  static Map<int, List<int>> _overridesFromJson(dynamic raw) {
+    if (raw == null) return const {};
+    final decoded = raw is String
+        ? (raw.isEmpty ? const <String, dynamic>{} : jsonDecode(raw))
+        : raw;
+    if (decoded is! Map) return const {};
+    return {
+      for (final entry in decoded.entries)
+        if (int.tryParse(entry.key.toString()) != null && entry.value is List)
+          int.parse(entry.key.toString()): [
+            for (final v in entry.value as List) (v as num).toInt(),
+          ],
+    };
+  }
+
+  Map<String, dynamic> get _overridesJson => {
+        for (final entry in barOverrides.entries)
+          entry.key.toString(): entry.value,
+      };
 
   factory SharedMedleyPart.fromSetlioRow(Map<String, dynamic> row) {
     return SharedMedleyPart(
@@ -32,6 +59,7 @@ class SharedMedleyPart {
       barCount: (row['bar_count'] as num).toInt(),
       transition:
           SharedMedleyTransition.fromDb(row['transition_mode'] as String?),
+      barOverrides: _overridesFromJson(row['bar_overrides']),
     );
   }
 
@@ -43,6 +71,7 @@ class SharedMedleyPart {
       'position': position,
       'bar_count': barCount,
       'transition_mode': transition.dbValue,
+      'bar_overrides': barOverrides.isEmpty ? null : _overridesJson,
     };
   }
 
@@ -61,6 +90,7 @@ class SharedMedleyPart {
       barCount: (map['bar_count'] as num).toInt(),
       transition:
           SharedMedleyTransition.fromDb(map['transition_mode'] as String?),
+      barOverrides: _overridesFromJson(map['bar_overrides']),
     );
   }
 
@@ -70,6 +100,7 @@ class SharedMedleyPart {
       'song_id': songId,
       'bar_count': barCount,
       'transition_mode': transition.dbValue,
+      if (barOverrides.isNotEmpty) 'bar_overrides': _overridesJson,
     };
   }
 }
@@ -144,6 +175,7 @@ class SharedMedley {
             position: index,
             barCount: part.barCount,
             transition: part.transition,
+            barOverrides: part.barOverrides,
           ).toSetlioRow(),
       ],
     );
