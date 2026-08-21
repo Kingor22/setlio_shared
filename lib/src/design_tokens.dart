@@ -8,15 +8,21 @@
 class DesignTokens {
   DesignTokens._();
 
-  static const int bg = 0xFF1C1B1E;
-  static const int panel = 0xFF211F23;
-  static const int surface = 0xFF252329;
-  static const int surface2 = 0xFF2D2B31;
-  static const int line = 0xFF38353D;
-  static const int lineSoft = 0xFF2A282E;
+  // SET-76/2 (Setronome, 21.08.2026): Grau-Skala eine Nuance auseinander-
+  // gezogen — Grund dunkler, Karte/zweite Ebene heller, Linien kraeftiger,
+  // Sekundaertext heller (Karte/Grund 1,10→1,21, Linie/Karte 1,29→1,53,
+  // Hinweistext/Karte 2,9→3,5 WCAG). ink unveraendert. Setlio und
+  // Sheetlio lesen diese Klasse nicht (0 Stellen) — wirkt nur in Setronome.
+
+  static const int bg = 0xFF19181B;
+  static const int panel = 0xFF222025;
+  static const int surface = 0xFF2A282E;
+  static const int surface2 = 0xFF343238;
+  static const int line = 0xFF47444D;
+  static const int lineSoft = 0xFF343139;
   static const int ink = 0xFFEAE8EC;
-  static const int muted = 0xFF9E9AA2;
-  static const int faint = 0xFF6C6872;
+  static const int muted = 0xFFADA9B1;
+  static const int faint = 0xFF7E7A84;
 
   static const int accent = 0xFF3EC6C0;
   static const int accentText = 0xFF64D4CE;
