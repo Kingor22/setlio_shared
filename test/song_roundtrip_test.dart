@@ -19,6 +19,10 @@ Map<String, dynamic> setronomeSongMap() => {
       'key': 'Em',
       'capo': 3,
       'tags': '["Party","Set 1"]',
+      // SETLIO-14: Gruppierung und Sondertakte gehen jetzt mit — vorher
+      // blieben sie auf dem Geraet und das zweite klang falsch.
+      'beat_pattern': '2,2,3',
+      'bar_overrides': '{"9":[6,4,0,2,1,1]}',
       'created_at': '2026-07-01T20:15:00.000',
       'updated_at': '2026-07-02T21:00:00.000',
     };
@@ -41,11 +45,21 @@ void main() {
     expect(row['bpm'], 138.5); // double, nie gerundet
     expect(row['accent_beats'], '1,3');
     expect(row['tags'], ['Party', 'Set 1']); // jsonb-Array, kein String
-    expect(row['status'], 'active');
+    // SETLIO-14: Was Setronome nicht fuehrt, steht NICHT in der Zeile —
+    // sonst setzte jeder Push Setlios Werte auf ihren Standard zurueck.
+    expect(row.containsKey('status'), isFalse);
+    expect(row.containsKey('duration_sec'), isFalse);
+    expect(row.containsKey('tempo_changes'), isFalse);
+    expect(row.containsKey('parts'), isFalse);
     expect(row['schema_version'], sharedSchemaVersion);
     expect(row.containsKey('created_at'), isFalse); // Server-Feld
     expect(row.containsKey('name'), isFalse);
     expect(row.containsKey('band'), isFalse);
+    // Und die zwei Felder, die es bisher nur lokal gab.
+    expect(row['beat_pattern'], [2, 2, 3]);
+    expect(row['bar_overrides'], {
+      '9': [6, 4, 0, 2, 1, 1],
+    });
   });
 
   test(
@@ -62,8 +76,11 @@ void main() {
     };
     final back = SharedSong.fromSetlioRow(serverRow).toSetronomeMap();
 
-    // `band` entfällt konzeptbedingt (ersetzt durch echte band_id).
-    expect(back, {...original, 'band': ''});
+    // `band` entfällt konzeptbedingt (ersetzt durch echte band_id) — und
+    // wird seit SETLIO-14 gar nicht mehr geschrieben, damit der lokale
+    // Wert den Abgleich überlebt.
+    final erwartet = {...original}..remove('band');
+    expect(back, erwartet);
   });
 
   test('leere Akzent-Menge überlebt den Roundtrip (kein erfundener Akzent)',
@@ -112,8 +129,8 @@ void main() {
     expect(shared.bpm, 118.0);
     expect(shared.isActive, isFalse);
     expect(shared.durationSec, 222);
-    expect(shared.tempoChanges.single.atBar, 33);
-    expect(shared.tempoChanges.single.bpm, 140.0);
+    expect(shared.tempoChanges!.single.atBar, 33);
+    expect(shared.tempoChanges!.single.bpm, 140.0);
     expect(shared.parts, ['Intro', 'Verse']);
 
     // Setlio-only-Felder tauchen in der Setronome-Map nicht auf.

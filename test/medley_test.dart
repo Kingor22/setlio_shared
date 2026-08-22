@@ -36,7 +36,9 @@ void main() {
       'band_id': 'band-1',
       'name': '80s Medley',
       'count_in_bars': 1,
-      'song_change_cue': 'ready_count'
+      'song_change_cue': 'ready_count',
+      // SETLIO-14: Die Pause zum naechsten Show-Teil geht jetzt mit.
+      'next_entry_delay': 0,
     });
     expect(rows.parts, hasLength(2));
     expect(rows.parts[0]['position'], 0);
@@ -57,7 +59,9 @@ void main() {
       rows.parts.reversed.toList(),
     );
     expect(back.parts.first.songId, 'song-1');
-    expect(back.toSetronomeMap(), original);
+    // SETLIO-14: Die Pause kommt jetzt mit zurueck (Standard 0), der
+    // Rest ist unveraendert.
+    expect(back.toSetronomeMap(), {...original, 'next_entry_delay': 0});
   });
 
   test('leeres Medley (kein Blob) bleibt leer', () {

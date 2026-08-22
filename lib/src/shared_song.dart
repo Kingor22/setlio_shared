@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'codecs.dart';
 import 'enums.dart';
 import 'schema_version.dart';
@@ -30,10 +31,12 @@ class SharedSong {
     this.capo = 0,
     this.tags = const [],
     this.notes = '',
+    this.beatPattern = const [],
+    this.barOverrides = const {},
     this.durationSec,
-    this.tempoChanges = const [],
-    this.parts = const [],
-    this.isActive = true,
+    this.tempoChanges,
+    this.parts,
+    this.isActive,
     this.schemaVersion = sharedSchemaVersion,
     required this.createdAt,
     required this.updatedAt,
@@ -70,13 +73,27 @@ class SharedSong {
   final List<String> tags;
   final String notes;
 
-  /// Setlio-only (Setronome ignoriert sie).
-  final int? durationSec;
-  final List<SharedTempoChange> tempoChanges;
-  final List<String> parts;
+  /// SETLIO-14: Gruppierung ungerader Achtel-Taktarten, z. B. [2,2,3]
+  /// für 7/8. Leer = ungruppiert. Ohne dieses Feld klingt derselbe Song
+  /// auf einem zweiten Gerät falsch.
+  final List<int> beatPattern;
 
-  /// Setlio status active/nirvana – Setronome sieht nur active-Songs.
-  final bool isActive;
+  /// SETLIO-14: Takt-Abweichungen und Formmarken des Songs —
+  /// Takt (1-basiert) → [Schläge, Notenwert, Unterteilung, Form-Code,
+  /// Ansage, Vorlauf]. Dasselbe Format wie bei Medley-Teilen.
+  final Map<int, List<int>> barOverrides;
+
+  /// Setlio-only. NULL heißt hier ausdrücklich „weiß ich nicht" — und
+  /// dann wird das Feld beim Schreiben AUSGELASSEN, statt den
+  /// Server-Wert mit einem Standard zu überschreiben (SETLIO-14, der
+  /// gefährlichste Punkt des Tickets: „Unbekannte Felder müssen
+  /// unverändert erhalten bleiben.").
+  final int? durationSec;
+  final List<SharedTempoChange>? tempoChanges;
+  final List<String>? parts;
+
+  /// Setlio status active/nirvana. null = unbekannt → nicht anfassen.
+  final bool? isActive;
   final int schemaVersion;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -89,6 +106,22 @@ class SharedSong {
 
   static double _toDouble(dynamic value) =>
       value is num ? value.toDouble() : double.parse(value as String);
+
+  /// jsonb-Liste (Supabase) → Liste von Ganzzahlen.
+  static List<int> _intListe(dynamic roh) {
+    if (roh is List) return [for (final v in roh) (v as num).toInt()];
+    if (roh is String && roh.trim().isNotEmpty) return _csvZuInts(roh);
+    return const [];
+  }
+
+  /// Setronome legt die Gruppierung lokal als CSV ab („2,2,3").
+  static List<int> _csvZuInts(String? roh) {
+    if (roh == null || roh.trim().isEmpty) return const [];
+    return [
+      for (final teil in roh.split(','))
+        if (int.tryParse(teil.trim()) != null) int.parse(teil.trim()),
+    ];
+  }
 
   /// Supabase-Zeile → Modell. Tolerant gegenüber numeric-als-String
   /// (REST) und fehlenden optionalen Spalten.
@@ -112,6 +145,8 @@ class SharedSong {
       capo: (row['capo'] as num?)?.toInt() ?? 0,
       tags: tagsFromDynamic(row['tags']),
       notes: row['notes'] as String? ?? '',
+      beatPattern: _intListe(row['beat_pattern']),
+      barOverrides: barOverridesFromDynamic(row['bar_overrides']),
       durationSec: (row['duration_sec'] as num?)?.toInt(),
       tempoChanges: [
         for (final change in row['tempo_changes'] as List<dynamic>? ?? const [])
@@ -150,10 +185,17 @@ class SharedSong {
       'capo': capo,
       'tags': tags,
       'notes': notes,
-      'duration_sec': durationSec,
-      'tempo_changes': [for (final change in tempoChanges) change.toJson()],
-      'parts': parts,
-      'status': isActive ? 'active' : 'nirvana',
+      'beat_pattern': beatPattern,
+      'bar_overrides': barOverridesToJson(barOverrides),
+      // SETLIO-14: Diese vier gehoeren Setlio. Kommen sie nicht mit,
+      // werden sie AUSGELASSEN — sonst setzte jeder Setronome-Push
+      // Spieldauer, Tempowechsel und Songform zurueck und holte
+      // geloeschte Songs aus dem Papierkorb.
+      if (durationSec != null) 'duration_sec': durationSec,
+      if (tempoChanges != null)
+        'tempo_changes': [for (final change in tempoChanges!) change.toJson()],
+      if (parts != null) 'parts': parts,
+      if (isActive != null) 'status': isActive! ? 'active' : 'nirvana',
       'schema_version': sharedSchemaVersion,
     };
   }
@@ -184,6 +226,8 @@ class SharedSong {
       capo: (map['capo'] as num?)?.toInt() ?? 0,
       tags: tagsFromDynamic(map['tags']),
       notes: map['notes'] as String? ?? '',
+      beatPattern: _csvZuInts(map['beat_pattern'] as String?),
+      barOverrides: barOverridesFromDynamic(map['bar_overrides']),
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
     );
@@ -197,7 +241,10 @@ class SharedSong {
       'id': id,
       'name': title,
       'artist': artist,
-      'band': '',
+      // KEIN 'band': Das Feld gehoert dem Geraet („mein Projekt") und
+      // steht in Setlio nirgends. Frueher stand hier ein leerer String —
+      // und loeschte den von Hand eingetippten Bandnamen bei JEDEM
+      // Abgleich (SETLIO-14).
       'bpm': bpm,
       'beats_per_bar': beatsPerBar,
       'note_value': noteValue,
@@ -210,6 +257,10 @@ class SharedSong {
       'key': songKey,
       'capo': capo,
       'tags': tagsToJson(tags),
+      'beat_pattern': beatPattern.isEmpty ? null : beatPattern.join(','),
+      'bar_overrides': barOverrides.isEmpty
+          ? null
+          : jsonEncode(barOverridesToJson(barOverrides)),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

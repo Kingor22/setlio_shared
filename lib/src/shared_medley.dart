@@ -115,7 +115,9 @@ class SharedMedley {
     required this.name,
     this.countInBars = 1,
     this.songChangeCue = 'ready_count',
+    this.nextEntryDelay = 0,
     this.parts = const [],
+    this.updatedAt,
   });
 
   final String id;
@@ -132,8 +134,18 @@ class SharedMedley {
   /// migriert Bestands-Medleys mit "an".
   final String songChangeCue;
 
+  /// SETLIO-14: Sekunden Wartezeit nach dem Schlusstakt, bevor der
+  /// nächste Show-Eintrag von selbst startet. 0 = nahtlos.
+  final int nextEntryDelay;
+
   /// In Abspiel-Reihenfolge (position == Listenindex).
   final List<SharedMedleyPart> parts;
+
+  /// SETLIO-14: Zeitstempel des Servers. Bis dahin hatten Medleys keinen
+  /// — der Abgleich konnte deshalb gar nicht entscheiden, welche Seite
+  /// neuer ist, und überschrieb lokale Arbeit bedingungslos. null = der
+  /// Datensatz kommt von einer älteren Zeile ohne Stempel.
+  final DateTime? updatedAt;
 
   /// Setlio: `medleys`-Zeile + zugehörige `medley_parts`-Zeilen
   /// (werden hier nach position sortiert).
@@ -150,7 +162,11 @@ class SharedMedley {
       name: medleyRow['name'] as String,
       countInBars: (medleyRow['count_in_bars'] as num?)?.toInt() ?? 1,
       songChangeCue: medleyRow['song_change_cue'] as String? ?? 'ready_count',
+      nextEntryDelay: (medleyRow['next_entry_delay'] as num?)?.toInt() ?? 0,
       parts: parts,
+      updatedAt: medleyRow['updated_at'] == null
+          ? null
+          : DateTime.tryParse(medleyRow['updated_at'].toString()),
     );
   }
 
@@ -165,6 +181,7 @@ class SharedMedley {
         'name': name,
         'count_in_bars': countInBars,
         'song_change_cue': songChangeCue,
+        'next_entry_delay': nextEntryDelay,
       },
       parts: [
         for (final (index, part) in parts.indexed)
@@ -197,6 +214,8 @@ class SharedMedley {
       name: map['name'] as String,
       countInBars: (map['count_in_bars'] as num?)?.toInt() ?? 1,
       songChangeCue: map['song_change_cue'] as String? ?? 'ready_count',
+      nextEntryDelay: (map['next_entry_delay'] as num?)?.toInt() ?? 0,
+      updatedAt: DateTime.tryParse(map['updated_at'] as String? ?? ''),
       parts: [
         for (final (index, part) in (decoded as List<dynamic>).indexed)
           SharedMedleyPart.fromSetronomeMap(
@@ -215,6 +234,8 @@ class SharedMedley {
       'parts': jsonEncode([for (final part in parts) part.toSetronomeMap()]),
       'count_in_bars': countInBars,
       'song_change_cue': songChangeCue,
+      'next_entry_delay': nextEntryDelay,
+      if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
     };
   }
 }

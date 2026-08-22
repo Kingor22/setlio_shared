@@ -30,3 +30,29 @@ List<String> tagsFromDynamic(dynamic value) {
       : value;
   return [for (final tag in decoded as List<dynamic>) tag as String];
 }
+
+/// Takt-Abweichungen: {"12": [6, 4, …]} → {12: [6, 4, …]}.
+///
+/// SETLIO-14: Dieselbe Form bei Songs und bei Medley-Teilen, deshalb
+/// steht die Übersetzung hier und nicht zweimal daneben. Akzeptiert
+/// sowohl eine JSON-Zeichenkette (Setronomes lokale Spalte) als auch
+/// eine fertige Map (Supabase jsonb).
+Map<int, List<int>> barOverridesFromDynamic(dynamic raw) {
+  if (raw == null) return const {};
+  final decoded = raw is String
+      ? (raw.trim().isEmpty ? const <String, dynamic>{} : jsonDecode(raw))
+      : raw;
+  if (decoded is! Map) return const {};
+  return {
+    for (final entry in decoded.entries)
+      if (int.tryParse(entry.key.toString()) != null && entry.value is List)
+        int.parse(entry.key.toString()): [
+          for (final v in entry.value as List) (v as num).toInt(),
+        ],
+  };
+}
+
+/// Und zurück — die Schlüssel als Text, wie jsonb es verlangt.
+Map<String, dynamic> barOverridesToJson(Map<int, List<int>> overrides) => {
+      for (final entry in overrides.entries) entry.key.toString(): entry.value,
+    };
