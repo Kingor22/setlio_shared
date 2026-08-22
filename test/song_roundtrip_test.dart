@@ -48,7 +48,9 @@ void main() {
     // SETLIO-14: Was Setronome nicht fuehrt, steht NICHT in der Zeile —
     // sonst setzte jeder Push Setlios Werte auf ihren Standard zurueck.
     expect(row.containsKey('status'), isFalse);
-    expect(row.containsKey('duration_sec'), isFalse);
+    // Die Dauer steht drin, weil der Song eine feste Taktzahl hat —
+    // sie wird gerechnet, nicht geraten (eigene Gruppe unten).
+    expect(row['duration_sec'], isNotNull);
     expect(row.containsKey('tempo_changes'), isFalse);
     expect(row.containsKey('parts'), isFalse);
     expect(row['schema_version'], sharedSchemaVersion);
@@ -155,4 +157,57 @@ void main() {
     // Schreiben stempelt immer die eigene Package-Version.
     expect(shared.toSetlioRow()['schema_version'], sharedSchemaVersion);
   });
+  group('Songlaenge aus Taktzahl und Tempo (Vorgabe 22.08.)', () {
+    test('4/4, 96 Takte, 120 BPM = 192 Sekunden', () {
+      expect(
+        songDauerSekunden(
+          totalBars: 96,
+          bpm: 120,
+          beatsPerBar: 4,
+          noteValue: 4,
+        ),
+        192,
+      );
+    });
+
+    test('6/8 zaehlt in Vierteln — drei je Takt, nicht sechs', () {
+      // 32 Takte 6/8 bei 120 BPM = 32 x 3 Viertel = 96 Viertel = 48 s.
+      expect(
+        songDauerSekunden(
+          totalBars: 32,
+          bpm: 120,
+          beatsPerBar: 6,
+          noteValue: 8,
+        ),
+        48,
+      );
+    });
+
+    test('ohne feste Taktzahl: null — der Wert aus Setlio bleibt stehen', () {
+      expect(
+        songDauerSekunden(
+          totalBars: null,
+          bpm: 120,
+          beatsPerBar: 4,
+          noteValue: 4,
+        ),
+        isNull,
+      );
+      final map = {...setronomeSongMap()}..remove('total_bars');
+      final shared = SharedSong.fromSetronomeMap(map, bandId: 'band-1');
+      expect(shared.durationSec, isNull);
+      expect(shared.toSetlioRow().containsKey('duration_sec'), isFalse);
+    });
+
+    test('mit fester Taktzahl geht die Dauer mit hoch', () {
+      final shared = SharedSong.fromSetronomeMap(
+        setronomeSongMap(),
+        bandId: 'band-1',
+      );
+      // 96 Takte 4/4 bei 138,5 BPM.
+      expect(shared.durationSec, (96 * 4 * 60 / 138.5).round());
+      expect(shared.toSetlioRow()['duration_sec'], shared.durationSec);
+    });
+  });
+
 }

@@ -228,6 +228,16 @@ class SharedSong {
       notes: map['notes'] as String? ?? '',
       beatPattern: _csvZuInts(map['beat_pattern'] as String?),
       barOverrides: barOverridesFromDynamic(map['bar_overrides']),
+      // Steht eine feste Taktzahl da, ergibt sich die Spieldauer aus
+      // Takten und Tempo (Vorgabe 22.08.). Ohne Taktzahl bleibt das Feld
+      // null — und ein in Setlio von Hand eingetragener Wert damit
+      // unangetastet.
+      durationSec: songDauerSekunden(
+        totalBars: (map['total_bars'] as num?)?.toInt(),
+        bpm: (map['bpm'] as num).toDouble(),
+        beatsPerBar: (map['beats_per_bar'] as num?)?.toInt() ?? 4,
+        noteValue: (map['note_value'] as num?)?.toInt() ?? 4,
+      ),
       createdAt: DateTime.parse(map['created_at'] as String),
       updatedAt: DateTime.parse(map['updated_at'] as String),
     );

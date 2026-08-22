@@ -56,3 +56,27 @@ Map<int, List<int>> barOverridesFromDynamic(dynamic raw) {
 Map<String, dynamic> barOverridesToJson(Map<int, List<int>> overrides) => {
       for (final entry in overrides.entries) entry.key.toString(): entry.value,
     };
+
+/// Wie lange läuft ein Song mit fester Taktzahl?
+///
+/// Nutzer-Vorgabe 22.08.: „Songlänge kann ja aus Taktanzahl und Tempo
+/// ermittelt werden — das soll automatisch geschehen, wenn eine feste
+/// Taktzahl angegeben ist."
+///
+/// Gerechnet wird in Vierteln, weil das Tempo in Setronome viertelbasiert
+/// ist: Ein Takt hat `beatsPerBar × 4 / noteValue` Viertel — ein 4/4 also
+/// vier, ein 6/8 drei, ein 7/8 dreieinhalb.
+///
+/// Ohne Taktzahl oder mit unsinnigem Tempo: null (= „weiß ich nicht"),
+/// und dann bleibt ein von Hand eingetragener Wert stehen.
+int? songDauerSekunden({
+  required int? totalBars,
+  required double bpm,
+  required int beatsPerBar,
+  required int noteValue,
+}) {
+  if (totalBars == null || totalBars <= 0) return null;
+  if (bpm <= 0 || beatsPerBar <= 0 || noteValue <= 0) return null;
+  final viertelJeTakt = beatsPerBar * 4 / noteValue;
+  return (totalBars * viertelJeTakt * 60 / bpm).round();
+}
