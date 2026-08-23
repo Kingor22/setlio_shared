@@ -75,18 +75,32 @@ class SharedSetlist {
   /// [gigId] wird nur bei einem echten Wert mitgeschickt (wie [createdBy]):
   /// Setronome kennt keine Gigs, ein Upload darf eine in Setlio bereits
   /// gesetzte Gig-Verknüpfung deshalb nie stillschweigend auf null ziehen.
-  Map<String, dynamic> toSetlioRow() {
+  ///
+  /// [mitFreigabe] entscheidet über die vier Felder, die NICHT die Musik
+  /// beschreiben, sondern das Verhältnis der beiden Apps: Papierkorb
+  /// (`status`), Freigabeschalter (`shared_to_setronome`) und Herkunft.
+  ///
+  /// SETLIO-14 (23.08.): Sie standen bedingungslos in jeder Zeile. Weil
+  /// Setronome eine verknüpfte Liste bei JEDER Änderung zurückschreibt,
+  /// hiess das: Wer in Setlio die Freigabe zurücknimmt oder die Liste in
+  /// den Papierkorb legt, bekam sie vom nächsten Rückschreiber wieder
+  /// heraus- und freigegeben — und eine in Setlio angelegte Liste trug
+  /// danach „von … empfangen". Beim Rückschreiben also `false`; nur das
+  /// erste, ausdrückliche „An Setlio senden" setzt sie.
+  Map<String, dynamic> toSetlioRow({bool mitFreigabe = true}) {
     return {
       'id': id,
       'band_id': bandId,
       'name': name,
       'transition_mode': transitionMode.dbValue,
       if (gigId != null) 'gig_id': gigId,
-      'status': isActive ? 'active' : 'nirvana',
-      'shared_to_setronome': sharedToSetronome,
-      'origin': origin.dbValue,
-      'origin_uploaded_by': originUploadedBy,
-      'origin_uploaded_at': originUploadedAt?.toUtc().toIso8601String(),
+      if (mitFreigabe) ...{
+        'status': isActive ? 'active' : 'nirvana',
+        'shared_to_setronome': sharedToSetronome,
+        'origin': origin.dbValue,
+        'origin_uploaded_by': originUploadedBy,
+        'origin_uploaded_at': originUploadedAt?.toUtc().toIso8601String(),
+      },
       if (createdBy != null) 'created_by': createdBy,
     };
   }
