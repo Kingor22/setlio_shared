@@ -8,6 +8,14 @@
 class DesignTokens {
   DesignTokens._();
 
+  // 24.08.2026 (Nutzer-Vorgabe): „Systemweit weniger Grau auf Schwarz,
+  // eher Richtung Weiss auf Schwarz. Alle Linien doppelt so breit wie
+  // jetzt — das ist zu fein so."
+  //
+  // Also beides: Die Schriftgraus ruecken an ink heran (muted 6,3 -> 9,5
+  // und faint 3,5 -> 6,2 WCAG gegen die Karte), und die Linien werden
+  // sichtbar (1,5 -> 2,8). Die Breite steckt in kLinie (app_theme).
+  //
   // SET-76/2 (Setronome, 21.08.2026): Grau-Skala eine Nuance auseinander-
   // gezogen — Grund dunkler, Karte/zweite Ebene heller, Linien kraeftiger,
   // Sekundaertext heller (Karte/Grund 1,10→1,21, Linie/Karte 1,29→1,53,
@@ -18,11 +26,11 @@ class DesignTokens {
   static const int panel = 0xFF222025;
   static const int surface = 0xFF2A282E;
   static const int surface2 = 0xFF343238;
-  static const int line = 0xFF47444D;
-  static const int lineSoft = 0xFF343139;
+  static const int line = 0xFF6E6A78;
+  static const int lineSoft = 0xFF4B4854;
   static const int ink = 0xFFEAE8EC;
-  static const int muted = 0xFFADA9B1;
-  static const int faint = 0xFF7E7A84;
+  static const int muted = 0xFFD2CFD8;
+  static const int faint = 0xFFABA7B3;
 
   static const int accent = 0xFF3EC6C0;
   static const int accentText = 0xFF64D4CE;
