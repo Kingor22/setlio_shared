@@ -47,6 +47,16 @@ class SharedSong {
   final String bandId;
 
   /// Uploader (profiles.id) – beim Upload aus Setronome gesetzt.
+  ///
+  /// PROVENIENZ, und die wird nie überschrieben (CLAUDE.md §4). Der
+  /// Wert gehört deshalb ausschließlich an einen Song, den es auf dem
+  /// Server noch NICHT gibt: `songs.added_by` ist `not null`, und die
+  /// Insert-Policy verlangt `added_by = auth.uid()` – ein neuer Song
+  /// kommt ohne ihn nicht durch. Bei einem Song, der schon drüben
+  /// steht, muss der Aufrufer hier `null` übergeben; dann lässt
+  /// [toSetlioRow] die Spalte aus (wie bei den anderen „weiß ich
+  /// nicht"-Feldern), und der Eintrag „hinzugefügt von …" bleibt bei
+  /// dem, der ihn wirklich angelegt hat.
   final String? addedBy;
   final String title;
   final String artist;
@@ -166,6 +176,12 @@ class SharedSong {
   /// Modell → Supabase-Zeile zum Schreiben. Ohne Server-Felder
   /// (created_at/updated_at setzt der Server); schema_version ist immer
   /// die Version dieses Packages.
+  ///
+  /// Achtung beim UPSERT: PostgREST schreibt jede mitgelieferte Spalte
+  /// auch im Konfliktfall, ein Upsert ist hier also zugleich ein
+  /// Update. Ob `added_by` mitgeht, entscheidet deshalb der Aufrufer
+  /// über [addedBy] – siehe dort. Wer für einen bereits vorhandenen
+  /// Song die eigene Nutzer-Id mitgibt, schreibt die Provenienz um.
   Map<String, dynamic> toSetlioRow() {
     return {
       'id': id,
